@@ -53,7 +53,7 @@ class Adaboost():
         n_samples, n_features = X.shape
         distrib_example = np.ones((n_samples)) / y.shape[0]
         bestEstimators = []
-        for t in range(min(self.n_estimator, n_features)):
+        for t in range(self.n_estimator):
             # Train weak learner using distribution
             bestStump = self.weakLearn(X, y, distrib_example)
             stumpNb, stumpThr, stumpErr, _ = bestStump.getAttributes()
@@ -77,7 +77,8 @@ class Adaboost():
 
 
     def score(self, X, y):
-        pass
+        preds = self.predict(X)
+        return getTpr(y, preds)
 
 
 def customTest():
