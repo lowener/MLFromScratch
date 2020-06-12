@@ -1,4 +1,5 @@
 import numpy as np
+from MLFromScratch.Tools import Score
 
 class Stump():
     def __init__(self, stumpNb, stumpThr, stumpErr, alphaT=0):
@@ -75,10 +76,10 @@ class Adaboost():
 
         return np.array(predictions.sum(axis=1) > 0, dtype=np.int)
 
-
+    
     def score(self, X, y):
         preds = self.predict(X)
-        return getTpr(y, preds)
+        return Score(y, preds)
 
 
 def customTest():
