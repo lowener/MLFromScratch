@@ -11,5 +11,6 @@ class AlgorithmMixin():
         raise NotImplementedError()
 
 
-    def score(self, X):
-        raise NotImplementedError()
+    def score(self, X, y):
+        preds = self.predict(X)
+        return Score(y, preds)

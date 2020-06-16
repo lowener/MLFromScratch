@@ -1,2 +1,3 @@
-from .score import Score
 from .metrics import *
+from .score import Score
+from .scoremulticlass import ScoreMulticlass

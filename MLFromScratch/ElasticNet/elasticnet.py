@@ -2,31 +2,24 @@ import numpy as np
 from MLFromScratch.Base import AlgorithmMixin
 from MLFromScratch.Tools import mse, Score
 
-class LinearRegression(AlgorithmMixin):
-    def __init__(self, fit_intercept=True, gradient_descent=True, n_iters=1000, lr=1e-3, scale=True):
+class ElasticNet(AlgorithmMixin):
+    def __init__(self, l1_ratio=0.5, l2_ratio=1.0, fit_intercept=True,
+                gradient_descent=True, n_iters=1000, lr=1e-3, scale=True):
         self.fit_intercept = fit_intercept
         self.gradient_descent = gradient_descent
         self.n_iters = n_iters
         self.lr = lr
+        self.l1_ratio = l1_ratio
+        self.l2_ratio = l2_ratio
         self.scale = scale
 
 
-    def invert(self, X, y):
-        '''
-        Y = Wx
-        MSE(Y, y) = (1/m) * (Y - y)² = (1/m) * (Wx - y).T * (Wx - y) = (1/m) * W.T*x.T*x - 2Wxy + y²
-        dMSE_w = 2Wx² - 2xy = 0
-               = X.T * X * w - X.T y
-        W = (x²)^(-1)* y * x
-        '''
-        n_samples, n_features = X.shape
-        w = np.zeros((n_features))
-        X2 = X.T.dot(X)
-        W = np.linalg.pinv(X2).dot(X.T).dot(y)
-        self.W = W
-
-
     def fit(self, X: np.array, y: np.array):
+        '''
+        1 / (2 * n_samples) * ||y - Xw||^2_2
+        + l1_ratio * ||w||_1
+        + 0.5 * l2_ratio * ||w||^2_2
+        '''
         if self.scale:
             X = np.array(X, dtype=np.float32)
             y = np.array(y, dtype=np.float32)
@@ -38,24 +31,23 @@ class LinearRegression(AlgorithmMixin):
             y -= self.y_offset
             self.y_scale = np.max(y, axis=0)
             y /= self.y_scale
-
         n_samples, n_features = X.shape
         if self.fit_intercept:
             ones = np.ones((n_samples, 1))
             X = np.concatenate((ones, X), axis=1)
             n_samples, n_features = X.shape
 
-        if not self.gradient_descent:
-            self.invert(X, y)
-        else:
-            W = np.random.rand((n_features))
-            self.history = []
-            for _ in range(self.n_iters):
-                preds = X.dot(W)
-                dMSE = (1/n_samples) * X.T.dot(preds - y)
-                W = W - self.lr * dMSE
-                self.history.append(mse(X.dot(W), y))
-            self.W = W
+        W = np.random.rand((n_features))
+        self.history = []
+        for _ in range(self.n_iters):
+            preds = X.dot(W)
+            dMSE = (1/n_samples) * X.T.dot(preds - y)
+            dl1 = np.sign(W)
+            dl2 = 2*W
+            W = W - self.lr * (dMSE + self.l1_ratio * dl1 + 0.5 * self.l2_ratio * dl2)
+            self.history.append(mse(X.dot(W), y))
+        self.W = W
+
 
 
     def predict(self, X: np.array):
@@ -76,13 +68,22 @@ class LinearRegression(AlgorithmMixin):
         return Score(y, preds)
 
 
+def dummyTest():
+    X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]])
+    y = np.dot(X, np.array([1, 2])) + 3
+    en = ElasticNet()
+    en.fit(X, y)
+    preds = en.predict(np.array([[3, 5]]))
+    print(preds)
+
+
 def housingTest():
     from sklearn.datasets import fetch_california_housing
     from sklearn.model_selection import train_test_split
     X, y = fetch_california_housing(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     
-    en=LinearRegression(lr=1, n_iters=3000)
+    en=ElasticNet(lr=0.1, l1_ratio=0.001, l2_ratio=0.01, n_iters=3000)
     en.fit(X_train, y_train)
     preds=en.predict(X_test)
     res = mse(y_test, preds)
@@ -90,11 +91,6 @@ def housingTest():
     print(res)
 
 if __name__ == '__main__':
-    X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]], dtype=np.float32)
-    y = np.dot(X, np.array([1, 2])) + 3
-    lr = LinearRegression(gradient_descent=False)
-    lr.fit(X, y)
-    preds = lr.predict(np.array([[3, 5]], dtype=np.float32))
-    print(mse(preds, [16]))
-
+    dummyTest()
     housingTest()
+    pass
