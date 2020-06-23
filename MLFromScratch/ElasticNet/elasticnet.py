@@ -1,6 +1,6 @@
 import numpy as np
 from MLFromScratch.Base import AlgorithmMixin
-from MLFromScratch.Tools import mse, Score
+from MLFromScratch.Tools import mse, Score, scale
 
 class ElasticNet(AlgorithmMixin):
     def __init__(self, l1_ratio=0.5, l2_ratio=1.0, fit_intercept=True,
@@ -21,16 +21,8 @@ class ElasticNet(AlgorithmMixin):
         + 0.5 * l2_ratio * ||w||^2_2
         '''
         if self.scale:
-            X = np.array(X, dtype=np.float32)
-            y = np.array(y, dtype=np.float32)
-            self.X_offset = np.average(X, axis=0)
-            X -= self.X_offset
-            self.X_scale = np.max(X, axis=0)
-            X /= self.X_scale
-            self.y_offset = np.average(y, axis=0)
-            y -= self.y_offset
-            self.y_scale = np.max(y, axis=0)
-            y /= self.y_scale
+            X, self.X_offset, self.X_scale = scale(X)
+            y, self.y_offset, self.y_scale = scale(y)
         n_samples, n_features = X.shape
         if self.fit_intercept:
             ones = np.ones((n_samples, 1))
@@ -51,9 +43,10 @@ class ElasticNet(AlgorithmMixin):
 
 
     def predict(self, X: np.array):
+        EPS = 1e-10
         if self.scale:
             X = np.array(X, dtype=np.float32)
-            X = (X - self.X_offset) / self.X_scale
+            X = (X - self.X_offset) / (self.X_scale + EPS)
         if self.fit_intercept:
             n_samples, n_features = X.shape
             ones = np.ones((n_samples, 1))

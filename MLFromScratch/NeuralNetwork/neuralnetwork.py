@@ -1,5 +1,5 @@
 import numpy as np
-from MLFromScratch.Tools import ScoreMulticlass, Softmax, Relu, LeakyRelu, cross_entropy
+from MLFromScratch.Tools import ScoreMulticlass, Softmax, Relu, LeakyRelu, cross_entropy, scale
 from MLFromScratch.Tests import testIris, testDigits
 from MLFromScratch.Base import AlgorithmMixin
 from layers import NeuralLayer
@@ -23,11 +23,7 @@ class NeuralNetwork(AlgorithmMixin):
     def fit(self, X, y):
         EPS = 1e-10
         if self.scale:
-            X = np.array(X, dtype=np.float32)
-            self.X_offset = np.average(X, axis=0)
-            X -= self.X_offset
-            self.X_scale = np.max(np.abs(X), axis=0)
-            X /= (self.X_scale + EPS)
+            X, self.X_offset, self.X_scale = scale(X)
         n_samples, n_features = X.shape
         _, n_classes = y.shape
         

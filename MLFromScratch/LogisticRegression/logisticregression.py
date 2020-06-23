@@ -1,6 +1,6 @@
 import numpy as np
 from MLFromScratch.Base import AlgorithmMixin
-from MLFromScratch.Tools import mse, cross_entropy,ScoreMulticlass
+from MLFromScratch.Tools import mse, cross_entropy,ScoreMulticlass, scale
 
 '''
 References:
@@ -18,11 +18,7 @@ class LogisticRegression(AlgorithmMixin):
 
     def fit(self, X, y):
         if self.scale:
-            X = np.array(X, dtype=np.float32)
-            self.X_offset = np.average(X, axis=0)
-            X -= self.X_offset
-            self.X_scale = np.max(X, axis=0)
-            X /= self.X_scale
+            X, self.X_offset, self.X_scale = scale(X)
         n_samples, n_features = X.shape
         _, n_classes = y.shape
         if self.fit_intercept:
@@ -55,9 +51,10 @@ class LogisticRegression(AlgorithmMixin):
 
 
     def predict(self, X):
+        EPS = 1e-10
         if self.scale:
             X = np.array(X, dtype=np.float32)
-            X = (X - self.X_offset) / self.X_scale
+            X = (X - self.X_offset) / (self.X_scale + EPS)
         if self.fit_intercept:
             n_samples, n_features = X.shape
             ones = np.ones((n_samples, 1))
