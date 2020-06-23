@@ -1,5 +1,6 @@
 import numpy as np
 from MLFromScratch.Tools import Score
+from MLFromScratch.Tests import testBreast
 
 class Stump():
     def __init__(self, stumpNb, stumpThr, stumpErr, alphaT=0):
@@ -82,66 +83,5 @@ class Adaboost():
         return Score(y, preds)
 
 
-def customTest():
-    a = Adaboost(12)
-    x= np.array([
-        [1,1,205   ],
-        [-1,1,180   ],
-        [1,-1,210   ],
-        [1,1,167    ],
-        [-1,1,156   ],
-        [-1,1,125   ],
-        [1,-1,168   ],
-        [1,1,172    ],
-    ])
-    y=np.array([
-        [1],
-        [1],
-        [1],
-        [1],
-        [0],
-        [0],
-        [0],
-        [0],
-    ])
-    a.fit(x,y)
-    preds = a.predict(x[-2:])
-
-
-def getTpr(labels, preds):
-    P = (labels == 1).sum()
-    N = (labels == 0).sum()
-    
-    TP = (preds[labels == 1] == 1).sum()
-    FN = (preds[labels == 1] == 0).sum()
-    FP = (preds[labels == 0] == 1).sum()
-    TN = (preds[labels == 0] == 0).sum()
-    
-    TPR = TP / (TP + FN)
-    FPR = FP / (FP + TN)
-    TNR = TN / (TN + FP)
-    FNR = FN / (FN + TP)
-
-    ACCURACY = (TP + TN) / (P + N)
-    return TPR, FPR, TNR, FNR, ACCURACY
-
-
-def breastTest():
-    from sklearn.datasets import load_breast_cancer
-    from sklearn.model_selection import train_test_split
-    X, y = load_breast_cancer(return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    a=Adaboost(9) 
-    a.fit(X_train, y_train)
-    preds=a.predict(X_test)
-    tpr = getTpr(y_test, preds)
-
-    from sklearn.ensemble import AdaBoostClassifier
-    ABC = AdaBoostClassifier(n_estimators=9)
-    ABC.fit(X_train, y_train)
-    preds2=ABC.predict(X_test)
-    tpr2 = getTpr(y_test, preds2)
-    
-
 if __name__ == '__main__':
-    breastTest()
+    testBreast(Adaboost(9))

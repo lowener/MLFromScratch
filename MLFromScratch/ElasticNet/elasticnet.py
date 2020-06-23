@@ -34,7 +34,7 @@ class ElasticNet(AlgorithmMixin):
         for _ in range(self.n_iters):
             preds = X.dot(W)
             dMSE = (1/n_samples) * X.T.dot(preds - y)
-            dl1 = np.sign(W)
+            dl1 = np.array(np.sign(W))
             dl2 = 2*W
             W = W - self.lr * (dMSE + self.l1_ratio * dl1 + 0.5 * self.l2_ratio * dl2)
             self.history.append(mse(X.dot(W), y))

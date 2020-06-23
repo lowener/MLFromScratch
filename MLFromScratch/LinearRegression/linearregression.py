@@ -1,6 +1,7 @@
 import numpy as np
 from MLFromScratch.Base import AlgorithmMixin
 from MLFromScratch.Tools import mse, Score, scale
+from MLFromScratch.Tests import testHousing
 
 class LinearRegression(AlgorithmMixin):
     def __init__(self, fit_intercept=True, gradient_descent=True, n_iters=1000, lr=1e-3, scale=True):
@@ -69,19 +70,6 @@ class LinearRegression(AlgorithmMixin):
         return Score(y, preds)
 
 
-def housingTest():
-    from sklearn.datasets import fetch_california_housing
-    from sklearn.model_selection import train_test_split
-    X, y = fetch_california_housing(return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    
-    en=LinearRegression(lr=1, n_iters=3000)
-    en.fit(X_train, y_train)
-    preds=en.predict(X_test)
-    res = mse(y_test, preds)
-    # Result is approximately 1.8
-    print(res)
-
 if __name__ == '__main__':
     X = np.array([[1, 1], [1, 2], [2, 2], [2, 3]], dtype=np.float32)
     y = np.dot(X, np.array([1, 2])) + 3
@@ -90,4 +78,4 @@ if __name__ == '__main__':
     preds = lr.predict(np.array([[3, 5]], dtype=np.float32))
     print(mse(preds, [16]))
 
-    housingTest()
+    testHousing(LinearRegression(lr=1, n_iters=3000))

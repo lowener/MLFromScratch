@@ -4,7 +4,6 @@ from MLFromScratch.Tests import testIris, testDigits
 from MLFromScratch.Base import AlgorithmMixin
 from layers import NeuralLayer
 
-np.random.seed(0)
 
 class NeuralNetwork(AlgorithmMixin):
     def __init__(self, layerSizes=[100,], activation=Relu, finalActivation=Softmax, lr=0.01,

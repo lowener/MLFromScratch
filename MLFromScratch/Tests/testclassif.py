@@ -37,7 +37,7 @@ def testDigits(algorithm: AlgorithmMixin):
     print("------------------------------------")
 
 
-def breastTest(algorithm: AlgorithmMixin):
+def testBreast(algorithm: AlgorithmMixin):
     from sklearn.datasets import load_breast_cancer
     from sklearn.model_selection import train_test_split
     print("Start Breast")

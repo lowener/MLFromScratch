@@ -1,6 +1,7 @@
 import numpy as np
 from MLFromScratch.Base import AlgorithmMixin
 from MLFromScratch.Tools import mse, cross_entropy,ScoreMulticlass, scale
+from MLFromScratch.Tests import testIris
 
 '''
 References:
@@ -37,7 +38,7 @@ class LogisticRegression(AlgorithmMixin):
                 dCE[:, j] = (1/n_samples) * X.T.dot(ydiff)
 
             #W = W - self.lr * dCE
-            dl1 = np.sign(W)
+            dl1 = np.array(np.sign(W))
             dl2 = 2*W
             W = W - self.lr * (dCE + self.l1_ratio * dl1 + 0.5 * self.l2_ratio * dl2)
             self.history.append(cross_entropy(y, preds))
@@ -68,25 +69,5 @@ class LogisticRegression(AlgorithmMixin):
         return ScoreMulticlass(y, preds)
 
 
-
-def testIris():
-    from sklearn.datasets import load_iris
-    from sklearn.model_selection import train_test_split
-    from sklearn.preprocessing import OneHotEncoder
-    X, y = load_iris(return_X_y=True)
-    enc = OneHotEncoder(handle_unknown='ignore', sparse=False)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    y_train2 = enc.fit_transform(y_train.reshape(-1, 1))
-    
-
-    lr = LogisticRegression(n_iters=4000, lr=0.1)
-    lr.fit(X_train, y_train2)
-    score = lr.score(X_test, y_test)
-    print(score.F1Score)
-    print((score.F1Score * score.P).sum() / score.P.sum())
-
-
-    
-
 if __name__ == '__main__':
-    testIris()
+    testIris(LogisticRegression(n_iters=4000, lr=0.1))
