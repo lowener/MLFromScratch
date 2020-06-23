@@ -2,7 +2,7 @@ import numpy as np
 from MLFromScratch.Tools import ScoreMulticlass, Softmax, Relu, LeakyRelu, cross_entropy
 from MLFromScratch.Tests import testIris, testDigits
 from MLFromScratch.Base import AlgorithmMixin
-from .layers import NeuralLayer
+from layers import NeuralLayer
 
 np.random.seed(0)
 
@@ -49,7 +49,6 @@ class NeuralNetwork(AlgorithmMixin):
             self.updateGrad(self.lr / n_samples)
             ce = cross_entropy(y, self.forward(X))
             self.history.append(ce)
-            print(ce)
 
 
 
