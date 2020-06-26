@@ -3,12 +3,13 @@ from MLFromScratch.Base import AlgorithmMixin
 from MLFromScratch.Tools import mse, cross_entropy,ScoreMulticlass, scale
 from MLFromScratch.Tests import testIris
 
-'''
-References:
-Pattern Recognition and Machine Learning, Section 4.3.4, Page 209
-https://en.wikipedia.org/wiki/Logistic_regression#Model_fitting
-'''
+
 class LogisticRegression(AlgorithmMixin):
+    '''
+    References:
+        Pattern Recognition and Machine Learning, Section 4.3.4, Page 209
+        https://en.wikipedia.org/wiki/Logistic_regression#Model_fitting
+    '''
     def __init__(self, lr=0.001, l1_ratio=0.0, l2_ratio=0.0, fit_intercept=True, n_iters=100, scale=True):
         self.lr = lr
         self.l1_ratio = l1_ratio

@@ -1,6 +1,9 @@
 import numpy as np
 
 def scale(X):
+    '''
+    Returns: X, X_offset, X_scale
+    '''
     EPS = 1e-10
     X = np.array(X, dtype=np.float32)
     X_offset = np.mean(X, axis=0)

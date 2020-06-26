@@ -4,6 +4,10 @@ from MLFromScratch.Tests import testIris, testDigits, testHousing
 from MLFromScratch.Tools import ScoreMulticlass, Score, scale
 
 class KNNClassifier(AlgorithmMixin):
+    '''
+    References:
+        Pattern Recognition and Machine Learning, Section 2.5.2, Page 124
+    '''
     def __init__(self, N, weights='uniform', scale=True):
         self.scale = scale
         self.N = N
