@@ -1,10 +1,6 @@
 import numpy as np
 
-def euclideanDist(A,B):
-    '''
-    Pair-wise eucledian dist
-    '''
-    return np.sum(A**2, 1).reshape(-1, 1) + np.sum(B**2, 1) - 2 * np.dot(A, B.T)
+from scipy.spatial.distance import cdist
 
 class Kernel:
     def __init__(self):
@@ -40,9 +36,9 @@ class KernelRBF(Kernel):
         self.length = length
 
     def __call__(self, X, Y):
-        X /= self.length
-        Y /= self.length
-        dist = euclideanDist(X,Y)
+        #dist = euclideanDist(X,Y)
+        dist = cdist(X / self.length, Y / self.length,
+                          metric='sqeuclidean')
         return np.exp(-0.5 * dist)
 
 
@@ -72,7 +68,7 @@ class KernelExpSineSquared(Kernel):
         self.periodicity = periodicity
 
     def __call__(self, X, Y):
-        dist = euclideanDist(X,Y)
+        dist = cdist(X,Y)
         sin = np.sin(np.pi * dist / self.periodicity)
         return np.exp(-2 * (sin/self.length)**2)
 
@@ -83,7 +79,7 @@ class KernelRationalQuadratic(Kernel):
         self.alpha = alpha
 
     def __call__(self, X, Y):
-        dist = euclideanDist(X,Y)
+        dist = cdist(X,Y)
         k = 1 + (dist**2) / (2* self.alpha * (self.length**2))
         return k**(-self.alpha)
 

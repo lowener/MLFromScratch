@@ -26,7 +26,7 @@ class GaussianProcessRegressor(AlgorithmMixin):
             y, self.y_offset, self.y_scale = scale(y)
         self.X_dataset = X
         self.y_dataset = y
-        noise = self.alpha**2 * np.eye(n_sample)
+        noise = self.alpha * np.eye(n_sample)
         #prior
         w_cov = self.kernel(X, X) + noise
         self.K = w_cov
@@ -43,10 +43,13 @@ class GaussianProcessRegressor(AlgorithmMixin):
         mu_s = Ks.T.dot(self.w_cov_i).dot(self.y_dataset)
         cov_s = Kss - Ks.T.dot(self.w_cov_i).dot(Ks)
 
+        
+        if self.normalize_y: # Undo Normalisation
+            mu_s = mu_s * self.y_scale + self.y_offset
+            cov_s = cov_s * self.y_scale + self.y_offset
 
-        preds = np.random.multivariate_normal(mu_s.ravel(), cov_s, n_sample)
-        if self.normalize_y:
-            preds = preds * self.y_scale + self.y_offset
+
+        preds = np.random.multivariate_normal(mu_s.ravel(), cov_s, 1)
         if returnParams:
             return preds, mu_s, cov_s
         return preds
@@ -59,24 +62,23 @@ class GaussianProcessRegressor(AlgorithmMixin):
 
 
 
-def plot_gp(mu, cov, X, X_train=None, Y_train=None, samples=[]):
-    from matplotlib import cm
-    import matplotlib.pyplot as plt
-    X = X.ravel()
-    mu = mu.ravel()
-    uncertainty = 1.96 * np.sqrt(np.diag(cov))
-    
-    plt.fill_between(X, mu + uncertainty, mu - uncertainty, alpha=0.1)
-    plt.plot(X, mu, label='Mean')
-    for i, sample in enumerate(samples):
-        plt.plot(X, sample, lw=1, ls='--', label=f'Sample {i+1}')
-    if X_train is not None:
-        plt.plot(X_train, Y_train, 'rx')
-    plt.legend()
-    plt.show()
-
-
 def easyTest():
+    def plot_gp(mu, cov, X, X_train=None, Y_train=None, samples=[]):
+        from matplotlib import cm
+        import matplotlib.pyplot as plt
+        X = X.ravel()
+        mu = mu.ravel()
+        uncertainty = 1.96 * np.sqrt(np.diag(cov))
+        
+        plt.fill_between(X, mu + uncertainty, mu - uncertainty, alpha=0.1)
+        plt.plot(X, mu, label='Mean')
+        for i, sample in enumerate(samples):
+            plt.plot(X, sample, lw=1, ls='--', label=f'Sample {i+1}')
+        if X_train is not None:
+            plt.plot(X_train, Y_train, 'rx')
+        plt.legend()
+        plt.show()
+
     X_test = np.arange(-5, 5, 0.2).reshape(-1, 1)
     # Noise free training data
     X_train = np.array([-4, -3, -2, -1, 1], dtype=np.float).reshape(-1, 1)
@@ -89,17 +91,13 @@ def easyTest():
     pass
 
 if __name__ == "__main__":
-    #easyTest()
-    # Kernel with parameters given in GPML book
-    k1 = 66.0**2 * KernelRBF(length=67.0)  # long term smooth rising trend
-    k2 = 2.4**2 * KernelRBF(length=90.0) \
-        * KernelExpSineSquared(length=1.3, periodicity=1.0)  # seasonal component
-    # medium term irregularity
-    k3 = 0.66**2 \
-        * KernelRationalQuadratic(length=1.2, alpha=0.78)
-    k4 = 0.18**2 * KernelRBF(length=0.134) \
-        + KernelWhite(noise=0.19**2)  # noise terms
-    kernel_gpml = k1 + k2 + k3 + k4
-
-    algo = GaussianProcessRegressor(kernel=kernel_gpml, alpha=0, normalize_y=True)
+    easyTest()
+    k1 = 50.0**2 * KernelRBF(length=50.0)
+    k2 = 2.0**2 * KernelRBF(length=100.0) \
+        * KernelExpSineSquared(length=1.0, periodicity=1.0)
+    k3 = 0.5**2 * KernelRationalQuadratic(length=1.0, alpha=1.0)
+    k4 = 0.1**2 * KernelRBF(length=0.1) \
+        + KernelWhite(noise=0.1**2)
+    kernel = k1 + k2 + k3 + k4
+    algo = GaussianProcessRegressor(kernel=kernel, alpha=0, normalize_y=False)
     testMauna(algo)
