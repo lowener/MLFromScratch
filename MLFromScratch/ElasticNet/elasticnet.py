@@ -58,7 +58,7 @@ class ElasticNet(AlgorithmMixin):
 
     def score(self, X, y):
         preds = self.predict(X)
-        return Score(y, preds)
+        return mse(y, preds)
 
 
 def dummyTest():

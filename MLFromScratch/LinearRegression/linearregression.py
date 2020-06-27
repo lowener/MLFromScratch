@@ -1,6 +1,6 @@
 import numpy as np
 from MLFromScratch.Base import AlgorithmMixin
-from MLFromScratch.Tools import mse, Score, scale
+from MLFromScratch.Tools import mse, scale
 from MLFromScratch.Tests import testHousing
 
 class LinearRegression(AlgorithmMixin):
@@ -67,7 +67,7 @@ class LinearRegression(AlgorithmMixin):
 
     def score(self, X, y):
         preds = self.predict(X)
-        return Score(y, preds)
+        return mse(y, preds)
 
 
 if __name__ == '__main__':
