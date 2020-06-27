@@ -1,7 +1,10 @@
 import numpy as np
 
-def euclidianDist(A,B):
-    return np.sqrt(A**2 - B**2)
+def euclideanDist(A,B):
+    '''
+    Pair-wise eucledian dist
+    '''
+    return np.sum(A**2, 1).reshape(-1, 1) + np.sum(B**2, 1) - 2 * np.dot(A, B.T)
 
 class Kernel:
     def __init__(self):
@@ -11,21 +14,35 @@ class Kernel:
         raise NotImplementedError
 
     def __add__(self, other):
+        if not isinstance(other, Kernel):
+            return KernelSum(self, KernelConstant(other))
         return KernelSum(self, other)
 
+    def __radd__(self, other):
+        if not isinstance(other, Kernel):
+            return KernelSum(KernelConstant(other), self)
+        return KernelSum(other, self)
+
     def __mul__(self, other):
+        if not isinstance(other, Kernel):
+            return KernelProduct(self, KernelConstant(other))
         return KernelProduct(self, other)
 
+    def __rmul__(self, other):
+        if not isinstance(other, Kernel):
+            return KernelProduct(KernelConstant(other), self)
+        return KernelProduct(other, self)
 
 
-class RBF(Kernel):
-    def __init__(self, length=1):
+
+class KernelRBF(Kernel):
+    def __init__(self, length=1.0):
         self.length = length
 
     def __call__(self, X, Y):
         X /= self.length
         Y /= self.length
-        dist = euclidianDist(X,Y)
+        dist = euclideanDist(X,Y)
         return np.exp(-0.5 * dist)
 
 
@@ -36,7 +53,7 @@ class KernelProduct(Kernel):
         pass
 
     def __call__(self, X, Y):
-        return K1(X,Y) * K2(X,Y)
+        return self.K1(X,Y) * self.K2(X,Y)
 
 
 class KernelSum(Kernel):
@@ -46,36 +63,46 @@ class KernelSum(Kernel):
         pass
 
     def __call__(self, X, Y):
-        return K1(X,Y) + K2(X,Y)
+        return self.K1(X,Y) + self.K2(X,Y)
 
 
-class ExpSineSquared(Kernel):
+class KernelExpSineSquared(Kernel):
     def __init__(self, length=1.0, periodicity=1.0):
         self.length = length
         self.periodicity = periodicity
 
     def __call__(self, X, Y):
-        dist = euclidianDist(X,Y)
+        dist = euclideanDist(X,Y)
         sin = np.sin(np.pi * dist / self.periodicity)
         return np.exp(-2 * (sin/self.length)**2)
 
 
-class RationalQuadratic(Kernel):
+class KernelRationalQuadratic(Kernel):
     def __init__(self, length=1.0, alpha=1.0):
         self.length = length
         self.alpha = alpha
 
     def __call__(self, X, Y):
-        dist = euclidianDist(X,Y)
+        dist = euclideanDist(X,Y)
         k = 1 + (dist**2) / (2* self.alpha * (self.length**2))
         return k**(-self.alpha)
 
 
-class WhiteKernel(Kernel):
+class KernelWhite(Kernel):
     def __init__(self, noise=1.0):
         self.noise = noise
 
     def __call__(self, X, Y=None):
-        if Y is None or X == Y:
+        if Y is None:
             return self.noise * np.eye(X.shape[0], X.shape[1])
-        return np.zeros_like(X)
+        return np.zeros((len(X), len(Y)))
+
+
+class KernelConstant(Kernel):
+    def __init__(self, value=0.0):
+        self.value = value
+
+    def __call__(self, X, Y=None):
+        if Y is None:
+            Y = X
+        return np.full((X.shape[0], Y.shape[0]), self.value)

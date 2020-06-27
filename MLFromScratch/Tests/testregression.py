@@ -42,6 +42,29 @@ def load_mauna_loa_atmospheric_co2():
     avg_ppmvs = np.asarray(ppmv_sums) / counts
     return months, avg_ppmvs
 
+
+def plot_gp(mu, cov, X, X_train=None, Y_train=None, samples=[]):
+    from matplotlib import cm
+    import matplotlib.pyplot as plt
+    X = X.ravel()
+    mu = mu.ravel()
+    uncertainty = 1.96 * np.sqrt(np.diag(cov))
+    
+    plt.fill_between(X, mu + uncertainty, mu - uncertainty, alpha=0.1)
+    plt.plot(X, mu, label='Mean')
+    for i, sample in enumerate(samples):
+        plt.plot(X, sample, lw=1, ls='--', label=f'Sample {i+1}')
+    if X_train is not None:
+        plt.plot(X_train, Y_train, 'rx')
+    plt.legend()
+    plt.show()
+
+
 def testMauna(algorithm: AlgorithmMixin):
     X, y = load_mauna_loa_atmospheric_co2()
     algorithm.fit(X, y)
+    X_test = np.linspace(X.min(), X.max() + 30, 1000)[:, np.newaxis]
+    y_pred, y_mu, y_cov = algorithm.predict(X_test, returnParams=True)
+    samples=np.random.multivariate_normal(y_mu,y_cov,5)
+    plot_gp(y_mu, y_cov, X_test, X, y)
+    print(algorithm.score(X, y))
