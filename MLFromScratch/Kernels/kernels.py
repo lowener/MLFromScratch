@@ -6,7 +6,7 @@ class Kernel:
     def __init__(self):
         raise NotImplementedError
 
-    def __call__(self):
+    def __call__(self, X, Y):
         raise NotImplementedError
 
     def __add__(self, other):

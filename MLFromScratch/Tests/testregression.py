@@ -64,7 +64,7 @@ def testMauna(algorithm: AlgorithmMixin):
     X, y = load_mauna_loa_atmospheric_co2()
     algorithm.fit(X, y)
     X_test = np.linspace(X.min(), X.max() + 30, 1000)[:, np.newaxis]
-    y_pred, y_mu, y_cov = algorithm.predict(X_test, returnParams=True)
+    y_mu, y_cov = algorithm.predict(X_test, returnCov=True)
     samples=np.random.multivariate_normal(y_mu,y_cov,5)
     plot_gp(y_mu, y_cov, X_test, X, y, samples)
     print("MSE: " + str(algorithm.score(X, y)))

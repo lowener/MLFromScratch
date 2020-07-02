@@ -1,1 +1,2 @@
-from .gaussianprocess import *
+from .gpr import *
+from .gpc import *

@@ -2,7 +2,6 @@ import numpy as np
 from MLFromScratch.Tests import testMauna
 from MLFromScratch.Base import AlgorithmMixin
 from MLFromScratch.Tools import scale, mse
-from MLFromScratch.Kernels import KernelRBF, KernelExpSineSquared, KernelWhite, KernelRationalQuadratic
 
 
 
@@ -33,7 +32,7 @@ class GaussianProcessRegressor(AlgorithmMixin):
         self.w_cov_i = np.linalg.pinv(w_cov)
 
 
-    def predict(self, X, returnParams=False):
+    def predict(self, X, returnCov=False):
         n_sample, _ = X.shape
         noise = self.alpha * np.eye(n_sample)
         Ks = self.kernel(self.X_dataset, X)
@@ -41,23 +40,22 @@ class GaussianProcessRegressor(AlgorithmMixin):
 
         #Posterior
         mu_s = Ks.T.dot(self.w_cov_i).dot(self.y_dataset)
-        cov_s = Kss - Ks.T.dot(self.w_cov_i).dot(Ks)
-
-        
         if self.normalize_y: # Undo Normalisation
             mu_s = mu_s * self.y_scale + self.y_offset
-            cov_s = cov_s * self.y_scale + self.y_offset
 
 
-        preds = np.random.multivariate_normal(mu_s.ravel(), cov_s, 1)
-        if returnParams:
-            return preds, mu_s, cov_s
-        return preds
+        if not returnCov:
+            return mu_s
+        else:
+            cov_s = Kss - Ks.T.dot(self.w_cov_i).dot(Ks)
+            if self.normalize_y: # Undo Normalisation
+                cov_s = cov_s * self.y_scale + self.y_offset
+            return mu_s, cov_s
         
 
 
     def score(self, X, y):
-        preds = self.predict(X)
+        preds,_ = self.predict(X, True)
         return mse(preds, y)
 
 
@@ -85,12 +83,14 @@ def easyTest():
     Y_train = np.sin(X_train)
     algo = GaussianProcessRegressor(kernel=KernelRBF(), alpha=1e-8, normalize_y=False)
     algo.fit(X_train, Y_train)
-    Y_test, mu_s, cov_s = algo.predict(X_test, returnParams=True)
+    mu_s, cov_s = algo.predict(X_test, returnCov=True)
     samples = np.random.multivariate_normal(mu_s.ravel(), cov_s, 3)
     plot_gp(mu_s, cov_s, X_test, X_train=X_train, Y_train=Y_train, samples=samples)
-    pass
+
 
 if __name__ == "__main__":
+    from MLFromScratch.Kernels import KernelRBF, KernelExpSineSquared, KernelWhite, KernelRationalQuadratic
+    
     easyTest()
     k1 = 50.0**2 * KernelRBF(length=50.0)
     k2 = 2.0**2 * KernelRBF(length=100.0) \
