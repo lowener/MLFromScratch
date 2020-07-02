@@ -1,5 +1,5 @@
 import numpy as np
-from MLFromScratch.Tools import Score
+from MLFromScratch.Tools import ScoreMulticlass
 from MLFromScratch.Tests import testBreast
 
 class Stump():
@@ -80,8 +80,8 @@ class Adaboost():
     
     def score(self, X, y):
         preds = self.predict(X)
-        return Score(y, preds)
+        return ScoreMulticlass(y, preds)
 
 
 if __name__ == '__main__':
-    testBreast(Adaboost(9))
+    testBreast(Adaboost(9), oneHot=False)
