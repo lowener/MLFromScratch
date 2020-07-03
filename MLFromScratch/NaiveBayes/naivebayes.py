@@ -1,7 +1,7 @@
 import numpy as np
 from MLFromScratch.Tests import testIris, testBreast, testDigits
 from MLFromScratch.Base import AlgorithmMixin
-from MLFromScratch.Tools import Score, ScoreMulticlass, Sigmoid, Softmax
+from MLFromScratch.Tools import ScoreMulticlass
 
 
 

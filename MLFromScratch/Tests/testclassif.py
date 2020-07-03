@@ -57,3 +57,43 @@ def testBreast(algorithm: AlgorithmMixin, oneHot=True):
     print((score.F1Score * score.P).sum() / score.P.sum())
     print("------------------------------------")
     
+
+def testBlobs(algo: AlgorithmMixin, display=False):
+    from sklearn.datasets import make_blobs
+
+    n_samples = 1500
+    random_state = 170
+    X, y = make_blobs(n_samples=n_samples, random_state=random_state)
+    algo.fit(X)
+    y_pred = algo.predict(X)
+    score = algo.score(X, y)
+    
+    print("F1 Score Classical: ")
+    print(score.F1Score)
+    print((score.F1Score * score.P).sum() / score.P.sum())
+    print("------------------------------------")
+
+    if display:
+        import matplotlib.pyplot as plt
+        plt.figure(figsize=(10, 6))
+        plt.subplot(121)
+        plt.scatter(X[:, 0], X[:, 1], c=y_pred)
+        plt.title("Classical Blobs")
+
+    
+    transformation = [[0.60834549, -0.63667341], [-0.40887718, 0.85253229]]
+    X_aniso = np.dot(X, transformation)
+    algo.fit(X_aniso)
+    y_pred = algo.predict(X_aniso)
+    score = algo.score(X_aniso, y)
+    print("F1 Score Anisotropic: ")
+    print(score.F1Score)
+    print((score.F1Score * score.P).sum() / score.P.sum())
+    print("------------------------------------")
+
+
+    if display:
+        plt.subplot(122)
+        plt.scatter(X_aniso[:, 0], X_aniso[:, 1], c=y_pred)
+        plt.title("Anisotropic Blobs")
+        plt.show()
