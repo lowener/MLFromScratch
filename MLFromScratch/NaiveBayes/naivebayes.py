@@ -7,11 +7,9 @@ from MLFromScratch.Tools import Score, ScoreMulticlass, Sigmoid, Softmax
 
 class NaiveBayes(AlgorithmMixin):
     '''
-    Multinomial Naive Bayes
+    Gaussian Naive Bayes
     References:
-        https://krasserm.github.io/2018/03/19/gaussian-processes/
-        Gaussian Processes for Machine Learning (GPML) by Rasmussen and Williams
-        https://www.youtube.com/watch?v=R-NUdqxKjos
+        https://en.wikipedia.org/wiki/Naive_Bayes_classifier
 
     '''
     def __init__(self, ):
