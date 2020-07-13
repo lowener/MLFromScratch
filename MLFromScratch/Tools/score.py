@@ -21,6 +21,7 @@ class Score:
         self.F1Score = 2 * TP / (2 * TP + FP + FN + EPS)
 
         self.sensitivity = self.TPR
+        self.recall = self.TPR
         self.specificity = self.TNR
         self.precision = self.PPV
         

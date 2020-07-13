@@ -6,6 +6,7 @@ class ScoreMulticlass:
         ulabels = np.unique(labels)
         self.F1Score = np.zeros((ulabels.shape))
         self.accuracy = np.zeros((ulabels.shape))
+        self.recall = np.zeros((ulabels.shape))
         self.P = np.zeros((ulabels.shape))
         for i, l in enumerate(ulabels):
             P = (labels == l).sum()
@@ -19,6 +20,8 @@ class ScoreMulticlass:
             self.P[i] = P
             self.F1Score[i] = 2 * TP / (2 * TP + FP + FN + EPS)
             self.accuracy[i] = (TP + TN) / (P + N + EPS)
+            self.recall[i] = TP / (TP + FN + EPS)
+        self.support = self.P
 
 
 if __name__ == '__main__':
