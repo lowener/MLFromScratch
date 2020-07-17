@@ -1,7 +1,7 @@
 import numpy as np
-from MLFromScratch.Tests import testRecoIris, testRecoWine
+from MLFromScratch.Tests import testRecoIris, testRecoWine, testBreast, testIris
 from MLFromScratch.Base import AlgorithmMixin
-from MLFromScratch.Tools import mse, scale
+from MLFromScratch.Tools import mse, scale, ScoreMulticlass
 
 
 
@@ -10,8 +10,7 @@ class LDA(AlgorithmMixin):
     LDA Algorithm (Fisher)
     References:
 
-        Deep Learning, Ian Goodfellow, Section 5.8.1, Page 146
-        Pattern Recognition and Machine Learning, Section 12.1, Page 561
+        Pattern Recognition and Machine Learning, Section 4.1.4, Page 168
 
     '''
     def __init__(self, dims: int = None, solver='svd', scale: bool = True):
@@ -26,11 +25,6 @@ class LDA(AlgorithmMixin):
             X, self.X_offset, self.X_scale = scale(X)
         n_samples, n_features = X.shape
         _, self.n_classes = y.shape
-
-        if self.dims is None:
-            dims = self.n_classes - 1
-        else:
-            dims = np.min([self.dims, self.n_classes - 1])
 
         self.p_classes = np.zeros(self.n_classes)
         self.mean_class = np.zeros((self.n_classes, n_features))
@@ -49,11 +43,13 @@ class LDA(AlgorithmMixin):
         pinv = np.linalg.pinv(self.S_within)
         if self.solver == 'svd':
             u, s, v = np.linalg.svd(pinv @ self.S_between)
-            self.proj = v.T[:, :dims]
+            self.proj = v.T
+            # self.bias = TODO
         elif self.solver == 'eig':
-            xc = np.cov((pinv @ self.S_between).T)
+            xc = pinv @ self.S_between
             evalue, evector = np.linalg.eigh(xc)
-            self.proj = evector[-dims:].T
+            self.proj = evector[::-1].T
+            # self.bias = TODO
         else:
             raise NotImplementedError
 
@@ -64,9 +60,9 @@ class LDA(AlgorithmMixin):
             X = np.array(X, dtype=np.float32)
             X = (X - self.X_offset) / (self.X_scale + EPS)
         n_samples, n_features = X.shape
-        y = np.zeros((n_samples, self.n_classes))
-        # TODO:  continue
-        raise NotImplementedError
+        
+        res = X.dot(self.proj)[:, :self.n_classes]
+        return res
 
 
     def transform(self, X):
@@ -74,23 +70,25 @@ class LDA(AlgorithmMixin):
         if self.scale:
             X = np.array(X, dtype=np.float32)
             X = (X - self.X_offset) / (self.X_scale + EPS)
-        res = (X-self.mean_class.mean(0)).dot(self.proj)
-        return res
 
-
-    def inverse_transform(self, X):
-        res = X.dot(self.proj.T)
-        if self.scale:
-            res = np.array(res, dtype=np.float32)
-            res = (res * self.X_scale) + self.X_offset
+        if self.dims is None:
+            dims = self.n_classes - 1
+        else:
+            dims = np.min([self.dims, self.n_classes - 1])
+        
+        res = X.dot(self.proj)[:, :dims]
         return res
     
 
     def score(self, X, y=None):
-        preds = self.inverse_transform(self.transform(X))
-        return mse(X, preds)
+        preds = self.predict(X).argmax(1)
+        return ScoreMulticlass(y, preds)
 
 
 if __name__ == '__main__':
-    testRecoIris(LDA(2, solver="svd"))#, display2D=True)
-    testRecoWine(LDA(2, solver="eig"))#, display=True)
+    testBreast(LDA(2, solver="eig"))
+    testIris(LDA(2, solver="eig"))
+    testBreast(LDA(2, solver="svd"))
+    testIris(LDA(2, solver="svd"))
+    testRecoIris(LDA(2, solver="eig"), display2D=True)
+    testRecoWine(LDA(2, solver="eig"), display=True)
