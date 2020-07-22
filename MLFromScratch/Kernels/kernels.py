@@ -102,3 +102,21 @@ class KernelConstant(Kernel):
         if Y is None:
             Y = X
         return np.full((X.shape[0], Y.shape[0]), self.value)
+
+
+class KernelPoly(Kernel):
+    def __init__(self, degree):
+        self.degree = degree
+
+
+    def __call__(self, X, Y):
+        return (1 + np.dot(X, y))**self.degree
+
+        
+class KernelLinear(Kernel):
+    def __init__(self):
+        pass
+
+
+    def __call__(self, X, Y):
+        return np.dot(X, Y)
