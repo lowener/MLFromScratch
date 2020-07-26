@@ -13,3 +13,11 @@ def cross_entropy(target:np.array, preds:np.array):
         res += np.sum(tmp * tmp2)
 
     return -res
+
+
+def binary_cross_entropy(target:np.array, preds:np.array):
+    EPS = 1e-10
+    target = target / 2 + 0.5
+    res = target * np.log(preds + EPS) + (1 - target) * np.log(1 - preds + EPS)
+
+    return -res.sum()

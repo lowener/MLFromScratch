@@ -23,6 +23,13 @@ class ScoreMulticlass:
             self.recall[i] = TP / (TP + FN + EPS)
         self.support = self.P
 
+    
+    def print_f1(self):
+        print("F1 Score: ")
+        print(self.F1Score)
+        print((self.F1Score * self.P).sum() / self.P.sum())
+        print("------------------------------------")
+
 
 if __name__ == '__main__':
     y_true = np.array([0, 1, 2, 0, 1, 2])
