@@ -12,8 +12,18 @@ class LinearSVC(AlgorithmMixin):
         https://en.wikipedia.org/wiki/Hinge_loss
         https://cs231n.github.io/optimization-1/#analytic
     '''
-    def __init__(self, C=1.0, l1_ratio=0.0, l2_ratio=1e-1, multi_class='multi',
-                fit_intercept=True, n_iters=1000, lr=1e-3, scale=True):
+    def __init__(self, C=1.0, l1_ratio=0.0, l2_ratio=1e-1, multi_class='ovr',
+                fit_intercept=True, n_iters=10000, lr=1e-3, scale=True):
+        '''
+           @param C: Regularization parameter
+           @param l1_ratio: Ratio of L1 loss
+           @param l2_ratio: Ratio of L2 loss
+           @param multi_class: {'ovr', 'multi'}
+                    Multi-class strategy to adopt (One Versus Rest with Hinge Loss, Multi class with Crammer and Singer Loss)
+           @param fit_intercept: Use a bias?
+           @param n_iters: Number of iterations
+           @param scale: Scale the data before using it?
+        '''
         self.C = C
         self.l1_ratio = l1_ratio
         self.l2_ratio = l2_ratio
@@ -24,19 +34,44 @@ class LinearSVC(AlgorithmMixin):
         self.scale = scale
 
 
-    def dcrammer_singer_loss(self, X: np.array, y: np.array, W: np.array) -> np.array:
+    def hinge_loss(self, target: np.array, preds: np.array) -> np.float32:
+        hinge_loss = 1 - target * preds
+        hinge_loss[hinge_loss < 0] = 0
+        return np.sum(hinge_loss)
+
+    
+    def dhinge_loss(self, X: np.array, y: np.array, W: np.array) -> np.array:
+        preds = X.dot(W)
+        dHL = np.zeros(np.shape(preds))
+        ty = y * preds
+        dHL[ty < 1] = -y[ty < 1]
+        dHL = self.C * (1/self.n_samples) * X.T.dot(dHL)
+        return dHL
+
+
+    def dcrammer_singer_loss(self, X: np.array, y: np.array, W: np.array, vectorized: bool = True) -> np.array:
         n_samples, n_classes = y.shape
         preds = X.dot(W)
-        dW = np.zeros(W.shape)
-        for i in range(n_samples):
-            yi = y[i].argmax()
-            for j in range(n_classes):
-                if j == yi:
-                    continue
-                if preds[i, j] - preds[i, yi] + 1 > 0:
-                    dW[:, j] += X[i]
-                    dW[:, yi] += -X[i]
-        dW = self.C * (1/self.n_samples) * dW
+        if vectorized:
+            dW = np.zeros(preds.shape)
+            yis = np.where(y == 1)
+            error = preds - preds[yis].reshape((-1,1)).repeat(3, axis=1) + 1
+            error[yis] = 0
+            dW[error > 0] = 1
+            where_e = (error > 0).sum(1)
+            dW[yis] -= where_e
+            dW = self.C * (1/self.n_samples) * X.T.dot(dW)
+        else:
+            dW = np.zeros(W.shape)
+            for i in range(n_samples):
+                yi = y[i].argmax()
+                for j in range(n_classes):
+                    if j == yi:
+                        continue
+                    if preds[i, j] - preds[i, yi] + 1 > 0:
+                        dW[:, j] += X[i]
+                        dW[:, yi] += -X[i]
+            dW = self.C * (1/self.n_samples) * dW
         return dW
 
 
@@ -52,11 +87,21 @@ class LinearSVC(AlgorithmMixin):
         self.n_samples, n_features = X.shape
         
         if self.multi_class == 'ovr':
-            raise NotImplementedError()
-            
+            predFn = lambda X, W: (X.dot(W))
+            self.W = []
+            self.history = []
+            for i in range(n_classes):
+                W = np.random.rand(n_features)
+                this_y = np.zeros((n_samples))
+                this_y[y[:, i] == 1] = 2
+                this_y -= 1
+                W, history = LinearGradientDescent(self.dhinge_loss, X, this_y, W, self.n_iters, 
+                                                self.lr, l1_ratio=self.l1_ratio, l2_ratio=self.l2_ratio,
+                                                metric=self.hinge_loss, predFn=predFn)
+                self.W.append(W)
+                self.history.append(history)
         elif self.multi_class == 'multi':
-            from MLFromScratch.Tools import Sigmoid
-            predFn = lambda X, W: Softmax(X.dot(W))
+            predFn = lambda X, W: Softmax(X.dot(W)) # Softmax for cross_entropy metric
             W = np.random.rand(n_features, n_classes)
             self.W, self.history = LinearGradientDescent(self.dcrammer_singer_loss, X, y, W, self.n_iters, 
                                             self.lr, l1_ratio=self.l1_ratio, l2_ratio=self.l2_ratio,
@@ -76,7 +121,10 @@ class LinearSVC(AlgorithmMixin):
             X = np.concatenate((ones, X), axis=1)
         
         if self.multi_class == 'ovr':
-            raise NotImplementedError
+            preds = []
+            for i in range(len(self.W)):
+                preds.append(X.dot(self.W[i]))
+            preds = np.array(preds).T
         elif self.multi_class == 'multi':
             preds = X.dot(self.W)
         else:
@@ -91,5 +139,7 @@ class LinearSVC(AlgorithmMixin):
 
 
 if __name__ == '__main__':
-    testIris(LinearSVC(lr=0.1, fit_intercept=True, multi_class='multi'))
-    testIris(LinearSVC(lr=0.1, fit_intercept=False, multi_class='multi'))
+    testIris(LinearSVC(lr=0.1, l2_ratio=1e-3, fit_intercept=True, multi_class='ovr')) # F1 0.92
+    testIris(LinearSVC(lr=0.1, l2_ratio=1e-2, fit_intercept=False, multi_class='ovr')) # F1 0.84
+    testIris(LinearSVC(lr=0.1, fit_intercept=True, multi_class='multi')) # F1 0.92
+    testIris(LinearSVC(lr=0.1, fit_intercept=False, multi_class='multi')) # F1 0.72
