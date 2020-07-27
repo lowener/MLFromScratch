@@ -1,1 +1,1 @@
-from .gradientdescent import LinearGradientDescent
+from .gradientdescent import LinearGradientDescent, LinearStochasticGradientDescent
