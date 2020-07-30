@@ -1,2 +1,2 @@
-from .svr import LinearSVR
-from .svc import LinearSVC
+from .linearsvr import LinearSVR
+from .linearsvc import LinearSVC
