@@ -17,13 +17,27 @@ class GMM(AlgorithmMixin):
         self.tol = tol
         self.max_iter = max_iter
 
+    def init_params(self, means=None, covs=None, coefs=None):
+        self.means_init = means
+        self.covs_init = covs
+        self.coefs_init = coefs
+
     def fit(self, X, y=None):
         n_sample, n_features = X.shape
 
         # Initialize means, covariance and mixing coefficients
-        self.means = np.random.uniform(size=(self.n_components, n_features))
-        self.covs = np.random.uniform(size=(self.n_components, n_features))
-        self.coefs = np.random.uniform(size=(self.n_components))
+        if self.means_init is None:
+            self.means = np.random.uniform(size=(self.n_components, n_features))
+        else:
+            self.means = self.means_init
+        if self.covs_init is None:
+            self.covs = np.random.uniform(size=(self.n_components, n_features))
+        else:
+            self.covs = self.covs_init
+        if self.coefs_init is None:
+            self.coefs = np.random.uniform(size=(self.n_components))
+        else:
+            self.coefs = self.coefs_init
 
         # Evaluate initial log likelihood
         llh = self.loglikelihood(X)
@@ -115,6 +129,7 @@ class GMM(AlgorithmMixin):
 
 
 def testGMM(algo):
+    # Taken from https://scikit-learn.org/stable/auto_examples/mixture/plot_gmm_covariances.html#sphx-glr-auto-examples-mixture-plot-gmm-covariances-py
     import matplotlib as mpl
     import matplotlib.pyplot as plt
     from sklearn import datasets
@@ -131,7 +146,7 @@ def testGMM(algo):
             angle = 180 * angle / np.pi  # convert to degrees
             v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
             ell = mpl.patches.Ellipse(
-                gmm.means[n, :2], v[0], v[1], 180 + angle, color=color
+                gmm.means[n, :2], v[0], v[1], 180 + angle, color=color, fill=False
             )
             ell.set_clip_box(ax.bbox)
             ell.set_alpha(0.5)
@@ -166,8 +181,9 @@ def testGMM(algo):
     for index, (name, estimator) in enumerate(estimators.items()):
         # Since we have class labels for the training data, we can
         # initialize the GMM parameters in a supervised manner.
-        # estimator.means_init = np.array([X_train[y_train == i].mean(axis=0)
-        #                                for i in range(n_classes)])
+        estimator.init_params(
+            np.array([X_train[y_train == i].mean(axis=0) for i in range(n_classes)])
+        )
 
         # Train the other parameters using the EM algorithm.
         estimator.fit(X_train)
