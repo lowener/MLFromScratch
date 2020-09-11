@@ -1,16 +1,25 @@
 import numpy as np
-from MLFromScratch.Base import AlgorithmMixin
-from MLFromScratch.Tools import mse, cross_entropy,ScoreMulticlass, scale
+from MLFromScratch.Base import AlgorithmBase
+from MLFromScratch.Tools import mse, cross_entropy, ScoreMulticlass, scale
 from MLFromScratch.Tests import testIris
 
 
-class LogisticRegression(AlgorithmMixin):
-    '''
+class LogisticRegression(AlgorithmBase):
+    """
     References:
         Pattern Recognition and Machine Learning, Section 4.3.4, Page 209
         https://en.wikipedia.org/wiki/Logistic_regression#Model_fitting
-    '''
-    def __init__(self, lr=0.001, l1_ratio=0.0, l2_ratio=0.0, fit_intercept=True, n_iters=100, scale=True):
+    """
+
+    def __init__(
+        self,
+        lr=0.001,
+        l1_ratio=0.0,
+        l2_ratio=0.0,
+        fit_intercept=True,
+        n_iters=100,
+        scale=True,
+    ):
         self.lr = lr
         self.l1_ratio = l1_ratio
         self.l2_ratio = l2_ratio
@@ -36,21 +45,21 @@ class LogisticRegression(AlgorithmMixin):
             dCE = np.zeros((n_features, n_classes))
             for j in range(n_classes):
                 ydiff = preds[:, j] - y[:, j]
-                dCE[:, j] = (1/n_samples) * X.T.dot(ydiff)
+                dCE[:, j] = (1 / n_samples) * X.T.dot(ydiff)
 
-            #W = W - self.lr * dCE
+            # W = W - self.lr * dCE
             dl1 = np.array(np.sign(W))
-            dl2 = 2*W
+            dl2 = 2 * W
             W = W - self.lr * (dCE + self.l1_ratio * dl1 + 0.5 * self.l2_ratio * dl2)
             self.history.append(cross_entropy(y, preds))
         self.W = W
         pass
 
-
     def softmax(self, alpha):
         _, n_classes = alpha.shape
-        return np.exp(alpha) / np.repeat(np.sum(np.exp(alpha), 1).reshape((-1, 1)), n_classes, axis=1)
-
+        return np.exp(alpha) / np.repeat(
+            np.sum(np.exp(alpha), 1).reshape((-1, 1)), n_classes, axis=1
+        )
 
     def predict(self, X):
         EPS = 1e-10
@@ -70,5 +79,5 @@ class LogisticRegression(AlgorithmMixin):
         return ScoreMulticlass(y, preds)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testIris(LogisticRegression(n_iters=4000, lr=0.1))

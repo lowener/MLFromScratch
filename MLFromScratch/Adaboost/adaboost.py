@@ -1,8 +1,10 @@
 import numpy as np
+from MLFromScratch.Base import AlgorithmBase
 from MLFromScratch.Tools import ScoreMulticlass
 from MLFromScratch.Tests import testBreast
 
-class Stump():
+
+class Stump:
     def __init__(self, stumpNb, stumpThr, stumpErr, alphaT=0):
         self.stumpNb = stumpNb
         self.stumpThr = stumpThr
@@ -13,14 +15,16 @@ class Stump():
         return self.stumpNb, self.stumpThr, self.stumpErr, self.alphaT
 
     def predict(self, X):
-        return np.array((X[:, self.stumpNb] < self.stumpThr) * 2 - 1, dtype=np.int)* self.alphaT
-        
-        
-class Adaboost():
+        return (
+            np.array((X[:, self.stumpNb] < self.stumpThr) * 2 - 1, dtype=np.int)
+            * self.alphaT
+        )
+
+
+class Adaboost(AlgorithmBase):
     def __init__(self, n_estimator):
         super().__init__()
         self.n_estimator = n_estimator
-
 
     def findBestStump(self, XColumn, y, distrib_example):
         thresholds = np.unique(XColumn)
@@ -34,7 +38,6 @@ class Adaboost():
                 bestStump = thr
         return globalError, bestStump
 
-
     def weakLearn(self, X, y, distrib_example):
         n_samples, n_features = X.shape
         featuresStump = np.zeros((n_features, 2))
@@ -44,9 +47,10 @@ class Adaboost():
             featuresStump[featNb][0] = stumpThr
             featuresStump[featNb][1] = stumpErr
         bestStumpNb = featuresStump.argmin(0)[1]
-        bestStump = Stump(bestStumpNb, featuresStump[bestStumpNb][0], featuresStump[bestStumpNb][1])
+        bestStump = Stump(
+            bestStumpNb, featuresStump[bestStumpNb][0], featuresStump[bestStumpNb][1]
+        )
         return bestStump
-
 
     def fit(self, X, y):
         # Y = {0, 1}
@@ -61,27 +65,27 @@ class Adaboost():
             stumpNb, stumpThr, stumpErr, _ = bestStump.getAttributes()
             # Choose alphaT
             EPS = 1e-10
-            alphaT = 0.5 * np.log((1-stumpErr + EPS) / (stumpErr+ EPS))
+            alphaT = 0.5 * np.log((1 - stumpErr + EPS) / (stumpErr + EPS))
             bestStump.alphaT = alphaT
             # Update distribution
             stumpPred = bestStump.predict(X)
-            distrib_example *= np.exp(- stumpPred * (y.flatten() * 2 - 1))
+            distrib_example *= np.exp(-stumpPred * (y.flatten() * 2 - 1))
             distrib_example /= np.sum(distrib_example)
-            #register this weak learner
+            # register this weak learner
             bestEstimators.append(bestStump)
         self.bestEstimators = bestEstimators
 
-
     def predict(self, X):
-        predictions = np.array(list(map(lambda est: est.predict(X), self.bestEstimators))).T
+        predictions = np.array(
+            list(map(lambda est: est.predict(X), self.bestEstimators))
+        ).T
 
         return np.array(predictions.sum(axis=1) > 0, dtype=np.int)
 
-    
     def score(self, X, y):
         preds = self.predict(X)
         return ScoreMulticlass(y, preds)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     testBreast(Adaboost(9), oneHot=False)

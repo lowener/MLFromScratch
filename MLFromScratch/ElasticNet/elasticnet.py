@@ -1,10 +1,19 @@
 import numpy as np
-from MLFromScratch.Base import AlgorithmMixin
+from MLFromScratch.Base import AlgorithmBase
 from MLFromScratch.Tools import mse, Score, scale
 
-class ElasticNet(AlgorithmMixin):
-    def __init__(self, l1_ratio=0.5, l2_ratio=1.0, fit_intercept=True,
-                gradient_descent=True, n_iters=1000, lr=1e-3, scale=True):
+
+class ElasticNet(AlgorithmBase):
+    def __init__(
+        self,
+        l1_ratio=0.5,
+        l2_ratio=1.0,
+        fit_intercept=True,
+        gradient_descent=True,
+        n_iters=1000,
+        lr=1e-3,
+        scale=True,
+    ):
         self.fit_intercept = fit_intercept
         self.gradient_descent = gradient_descent
         self.n_iters = n_iters
@@ -13,13 +22,12 @@ class ElasticNet(AlgorithmMixin):
         self.l2_ratio = l2_ratio
         self.scale = scale
 
-
     def fit(self, X: np.array, y: np.array):
-        '''
+        """
         1 / (2 * n_samples) * ||y - Xw||^2_2
         + l1_ratio * ||w||_1
         + 0.5 * l2_ratio * ||w||^2_2
-        '''
+        """
         if self.scale:
             X, self.X_offset, self.X_scale = scale(X)
             y, self.y_offset, self.y_scale = scale(y)
@@ -33,14 +41,12 @@ class ElasticNet(AlgorithmMixin):
         self.history = []
         for _ in range(self.n_iters):
             preds = X.dot(W)
-            dMSE = (1/n_samples) * X.T.dot(preds - y)
+            dMSE = (1 / n_samples) * X.T.dot(preds - y)
             dl1 = np.array(np.sign(W))
-            dl2 = 2*W
+            dl2 = 2 * W
             W = W - self.lr * (dMSE + self.l1_ratio * dl1 + 0.5 * self.l2_ratio * dl2)
             self.history.append(mse(X.dot(W), y))
         self.W = W
-
-
 
     def predict(self, X: np.array):
         EPS = 1e-10
@@ -73,17 +79,19 @@ def dummyTest():
 def housingTest():
     from sklearn.datasets import fetch_california_housing
     from sklearn.model_selection import train_test_split
+
     X, y = fetch_california_housing(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    
-    en=ElasticNet(lr=0.1, l1_ratio=0.001, l2_ratio=0.01, n_iters=3000)
+
+    en = ElasticNet(lr=0.1, l1_ratio=0.001, l2_ratio=0.01, n_iters=3000)
     en.fit(X_train, y_train)
-    preds=en.predict(X_test)
+    preds = en.predict(X_test)
     res = mse(y_test, preds)
     # Result is approximately 1.8
     print(res)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     dummyTest()
     housingTest()
     pass

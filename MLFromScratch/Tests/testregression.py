@@ -1,11 +1,12 @@
 import numpy as np
-from MLFromScratch.Base import AlgorithmMixin
+from MLFromScratch.Base import AlgorithmBase
 from MLFromScratch.Tools import mse
 
 
 def testBase(dataset):
-    def testBase2(algorithm: AlgorithmMixin):
+    def testBase2(algorithm: AlgorithmBase):
         from sklearn.model_selection import train_test_split
+
         X, y = dataset(return_X_y=True)
         X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
@@ -13,26 +14,30 @@ def testBase(dataset):
         preds = algorithm.predict(X_test)
         res = mse(y_test, preds)
         print("MSE: " + str(res))
+
     return testBase2
 
 
 try:
     from sklearn import datasets
+
     testHousing = testBase(datasets.fetch_california_housing)
     testDiabetes = testBase(datasets.load_diabetes)
 except ImportError:
     print("SKLearn not found: No tests")
 
 
-def load_faithful():
+def loadFaithful():
     import pandas as pd
-    data = pd.read_csv('data/old_faithful.csv')
-    return data['eruptions'], data['waiting']
+
+    data = pd.read_csv("data/old_faithful.csv")
+    return data["eruptions"], data["waiting"]
 
 
-def test_faithful(algorithm: AlgorithmMixin):
+def testFaithful(algorithm: AlgorithmBase):
     from sklearn.model_selection import train_test_split
-    X, y = load_faithful()
+
+    X, y = loadFaithful()
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
     algorithm.fit(X_train, y_train)
@@ -41,9 +46,9 @@ def test_faithful(algorithm: AlgorithmMixin):
     print("MSE: " + str(res))
 
 
-
 def load_mauna_loa_atmospheric_co2():
     from sklearn.datasets import fetch_openml
+
     ml_data: dict = fetch_openml(data_id=41187)
     months = []
     ppmv_sums = []
@@ -72,26 +77,27 @@ def load_mauna_loa_atmospheric_co2():
 def plot_gp(mu, cov, X, X_train=None, Y_train=None, samples=[]):
     from matplotlib import cm
     import matplotlib.pyplot as plt
+
     X = X.ravel()
     mu = mu.ravel()
     uncertainty = 1.96 * np.sqrt(np.diag(cov))
-    
+
     plt.fill_between(X, mu + uncertainty, mu - uncertainty, alpha=0.1)
-    plt.plot(X, mu, label='Mean')
+    plt.plot(X, mu, label="Mean")
     for i, sample in enumerate(samples):
-        plt.plot(X, sample, lw=1, ls='--', label=f'Sample {i+1}')
+        plt.plot(X, sample, lw=1, ls="--", label=f"Sample {i+1}")
     if X_train is not None:
-        plt.plot(X_train, Y_train, 'rx')
+        plt.plot(X_train, Y_train, "rx")
     plt.legend()
     plt.show()
 
 
-def testMauna(algorithm: AlgorithmMixin, display: bool = False):
+def testMauna(algorithm: AlgorithmBase, display: bool = False):
     X, y = load_mauna_loa_atmospheric_co2()
     algorithm.fit(X, y)
     X_test = np.linspace(X.min(), X.max() + 30, 1000)[:, np.newaxis]
     y_mu, y_cov = algorithm.predict(X_test, returnCov=True)
     print("MSE: " + str(algorithm.score(X, y)))
     if display:
-        samples=np.random.multivariate_normal(y_mu,y_cov,5)
+        samples = np.random.multivariate_normal(y_mu, y_cov, 5)
         plot_gp(y_mu, y_cov, X_test, X, y, samples)

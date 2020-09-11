@@ -1,10 +1,10 @@
 import numpy as np
 from MLFromScratch.Tests import testBlobs, testIris
-from MLFromScratch.Base import AlgorithmMixin
+from MLFromScratch.Base import AlgorithmBase
 from MLFromScratch.Tools import ScoreMulticlass, scale
 
 
-class KMeans(AlgorithmMixin):
+class KMeans(AlgorithmBase):
     """
     K-Means Algorithm
     References:

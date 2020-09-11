@@ -2,6 +2,7 @@ import numpy as np
 
 from scipy.spatial.distance import cdist
 
+
 class Kernel:
     def __init__(self):
         raise NotImplementedError
@@ -30,15 +31,13 @@ class Kernel:
         return KernelProduct(other, self)
 
 
-
 class KernelRBF(Kernel):
     def __init__(self, length=1.0):
         self.length = length
 
     def __call__(self, X, Y):
-        #dist = euclideanDist(X,Y)
-        dist = cdist(X / self.length, Y / self.length,
-                          metric='sqeuclidean')
+        # dist = euclideanDist(X,Y)
+        dist = cdist(X / self.length, Y / self.length, metric="sqeuclidean")
         return np.exp(-0.5 * dist)
 
 
@@ -49,7 +48,7 @@ class KernelProduct(Kernel):
         pass
 
     def __call__(self, X, Y):
-        return self.K1(X,Y) * self.K2(X,Y)
+        return self.K1(X, Y) * self.K2(X, Y)
 
 
 class KernelSum(Kernel):
@@ -59,7 +58,7 @@ class KernelSum(Kernel):
         pass
 
     def __call__(self, X, Y):
-        return self.K1(X,Y) + self.K2(X,Y)
+        return self.K1(X, Y) + self.K2(X, Y)
 
 
 class KernelExpSineSquared(Kernel):
@@ -68,9 +67,9 @@ class KernelExpSineSquared(Kernel):
         self.periodicity = periodicity
 
     def __call__(self, X, Y):
-        dist = cdist(X,Y)
+        dist = cdist(X, Y)
         sin = np.sin(np.pi * dist / self.periodicity)
-        return np.exp(-2 * (sin/self.length)**2)
+        return np.exp(-2 * (sin / self.length) ** 2)
 
 
 class KernelRationalQuadratic(Kernel):
@@ -79,9 +78,9 @@ class KernelRationalQuadratic(Kernel):
         self.alpha = alpha
 
     def __call__(self, X, Y):
-        dist = cdist(X,Y)
-        k = 1 + (dist**2) / (2* self.alpha * (self.length**2))
-        return k**(-self.alpha)
+        dist = cdist(X, Y)
+        k = 1 + (dist ** 2) / (2 * self.alpha * (self.length ** 2))
+        return k ** (-self.alpha)
 
 
 class KernelWhite(Kernel):
@@ -108,15 +107,13 @@ class KernelPoly(Kernel):
     def __init__(self, degree):
         self.degree = degree
 
-
     def __call__(self, X, Y):
-        return (1 + np.dot(X, y))**self.degree
+        return (1 + np.dot(X, y)) ** self.degree
 
-        
+
 class KernelLinear(Kernel):
     def __init__(self):
         pass
-
 
     def __call__(self, X, Y):
         return np.dot(X, Y)

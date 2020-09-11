@@ -1,10 +1,10 @@
 import numpy as np
-from MLFromScratch.Base import AlgorithmMixin
+from MLFromScratch.Base import AlgorithmBase
 from MLFromScratch.Tests import testIris, testDigits, testHousing
 from MLFromScratch.Tools import ScoreMulticlass, Score, scale
 
 
-class KNNClassifier(AlgorithmMixin):
+class KNNClassifier(AlgorithmBase):
     """
     References:
         Pattern Recognition and Machine Learning, Section 2.5.2, Page 124
@@ -38,9 +38,8 @@ class KNNClassifier(AlgorithmMixin):
             distance_ind = distance_ind[: self.N]
             nearestY = self.Y_params[distance_ind]
             if self.weights == "distance":
-                nearestY = (
-                    (1 / distance[distance_ind]).T * nearestY.T
-                ).T  # weight points by the inverse of their distance
+                # weight points by the inverse of their distance
+                nearestY = ((1 / distance[distance_ind]).T * nearestY.T).T
             Y[n] = np.mean(nearestY, 0)
             Y[n] /= Y[n].sum()
 
@@ -51,7 +50,7 @@ class KNNClassifier(AlgorithmMixin):
         return ScoreMulticlass(y, preds)
 
 
-class KNNRegressor(AlgorithmMixin):
+class KNNRegressor(AlgorithmBase):
     def __init__(self, N, weights="uniform", scale=True):
         self.scale = scale
         self.N = N
@@ -82,9 +81,8 @@ class KNNRegressor(AlgorithmMixin):
             if self.weights == "distance":
                 weight = (1 / distance[distance_ind]).T
                 weight /= weight.mean()
-                nearestY = (
-                    weight * nearestY.T
-                ).T  # weight points by the inverse of their distance
+                # weight points by the inverse of their distance
+                nearestY = (weight * nearestY.T).T
             Y[n] = np.mean(nearestY, 0)
 
         return (Y * self.Y_scale) + self.Y_offset

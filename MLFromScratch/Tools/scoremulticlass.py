@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class ScoreMulticlass:
     def __init__(self, labels, preds):
         EPS = 1e-10
@@ -23,7 +24,6 @@ class ScoreMulticlass:
             self.recall[i] = TP / (TP + FN + EPS)
         self.support = self.P
 
-    
     def print_f1(self):
         print("F1 Score: ")
         print(self.F1Score)
@@ -31,7 +31,7 @@ class ScoreMulticlass:
         print("------------------------------------")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     y_true = np.array([0, 1, 2, 0, 1, 2])
     y_pred = np.array([0, 2, 1, 0, 0, 1])
 

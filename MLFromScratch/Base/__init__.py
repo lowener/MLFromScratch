@@ -1,1 +1,1 @@
-from .algorithmmixin import AlgorithmMixin
+from .algorithmbase import AlgorithmBase

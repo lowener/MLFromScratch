@@ -1,11 +1,11 @@
 import numpy as np
 from MLFromScratch.Tests import testFaithful
-from MLFromScratch.Base import AlgorithmMixin
+from MLFromScratch.Base import AlgorithmBase
 from MLFromScratch.Tools import scale, ScoreMulticlass
 from scipy import stats
 
 
-class GMM(AlgorithmMixin):
+class GMM(AlgorithmBase):
     """
     Gaussian Mixture Model
     References:
@@ -26,6 +26,7 @@ class GMM(AlgorithmMixin):
         n_sample, n_features = X.shape
 
         # Initialize means, covariance and mixing coefficients
+        # TODO: Add KMeans init
         if self.means_init is None:
             self.means = np.random.uniform(size=(self.n_components, n_features))
         else:
