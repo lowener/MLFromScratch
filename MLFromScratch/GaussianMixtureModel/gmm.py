@@ -2,6 +2,7 @@ import numpy as np
 from MLFromScratch.Tests import testFaithful
 from MLFromScratch.Base import AlgorithmBase
 from MLFromScratch.Tools import scale, ScoreMulticlass
+from MLFromScratch.KMeans import KMeans
 from scipy import stats
 
 
@@ -12,33 +13,49 @@ class GMM(AlgorithmBase):
         Pattern Recognition and Machine Learning, Section 9.2.2, Page 435
     """
 
-    def __init__(self, n_components, tol=1e-3, max_iter=100):
+    def __init__(self, n_components, tol=1e-3, max_iter=100, initialization="random"):
+        """
+        @param n_components: Number of Gaussians
+        @param tol: Tolerance for convergence
+        @param max_iter: maximum iteration of the EM algorithm
+        @param initialization: {'random', 'kmeans'}
+                Initializatioin strategy
+        """
         self.n_components = n_components
         self.tol = tol
         self.max_iter = max_iter
+        if initialization not in {"random", "kmeans"}:
+            raise NotImplementedError
+        self.initialization = initialization
+        self.init_params()
 
     def init_params(self, means=None, covs=None, coefs=None):
         self.means_init = means
         self.covs_init = covs
         self.coefs_init = coefs
 
+    def init_kmeans(self, X, max_iters=1000, scale=False, tol=1e-5):
+        km = KMeans(self.n_components, max_iters, scale, tol)
+        km.fit(X)
+        self.means_init = km.centers
+
     def fit(self, X, y=None):
         n_sample, n_features = X.shape
 
         # Initialize means, covariance and mixing coefficients
-        # TODO: Add KMeans init
         if self.means_init is None:
-            self.means = np.random.uniform(size=(self.n_components, n_features))
-        else:
-            self.means = self.means_init
+            if self.initialization == "kmeans":
+                self.init_kmeans(X)
+            else:
+                self.means_init = np.random.uniform(size=(self.n_components, n_features))
         if self.covs_init is None:
-            self.covs = np.random.uniform(size=(self.n_components, n_features))
-        else:
-            self.covs = self.covs_init
+            self.covs_init = np.random.uniform(size=(self.n_components, n_features))
         if self.coefs_init is None:
-            self.coefs = np.random.uniform(size=(self.n_components))
-        else:
-            self.coefs = self.coefs_init
+            self.coefs_init = np.random.uniform(size=(self.n_components))
+
+        self.means = self.means_init
+        self.covs = self.covs_init
+        self.coefs = self.coefs_init
 
         # Evaluate initial log likelihood
         llh = self.loglikelihood(X)

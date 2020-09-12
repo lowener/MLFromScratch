@@ -18,7 +18,6 @@ class KMeans(AlgorithmBase):
         self.scale = scale
         self.max_iters = max_iters
         self.tol = tol
-        pass
 
     def fit(self, X, y=None):
         """

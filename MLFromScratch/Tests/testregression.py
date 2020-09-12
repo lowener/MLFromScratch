@@ -30,20 +30,19 @@ except ImportError:
 def loadFaithful():
     import pandas as pd
 
-    data = pd.read_csv("data/old_faithful.csv")
-    return data["eruptions"], data["waiting"]
+    data = pd.read_csv("MLFromScratch/Tests/data/old_faithful.csv")
+    return data[["eruptions","waiting"]]
 
 
 def testFaithful(algorithm: AlgorithmBase):
+    raise NotImplementedError("TODO")
     from sklearn.model_selection import train_test_split
 
-    X, y = loadFaithful()
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    X = loadFaithful()
+    X_train, X_test = train_test_split(X, random_state=0)
 
-    algorithm.fit(X_train, y_train)
+    algorithm.fit(X_train)
     preds = algorithm.predict(X_test)
-    res = mse(y_test, preds)
-    print("MSE: " + str(res))
 
 
 def load_mauna_loa_atmospheric_co2():
