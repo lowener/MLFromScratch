@@ -2,6 +2,7 @@ import numpy as np
 from MLFromScratch.Tests import testMauna
 from MLFromScratch.Base import AlgorithmBase
 from MLFromScratch.Tools import scale, mse
+from scipy.linalg import cholesky, cho_solve
 
 
 class GaussianProcessRegressor(AlgorithmBase):
@@ -13,10 +14,18 @@ class GaussianProcessRegressor(AlgorithmBase):
 
     """
 
-    def __init__(self, kernel, alpha=1e-8, normalize_y=False):
+    def __init__(self, kernel, alpha=1e-8, normalize_y=False, cholesky=True):
+        """
+        Gaussian Process Regression
+           @param kernel: Kernel to use (see MLFromScratch.Kernels)
+           @param alpha: Noise added to the diagonal of the kernel matrix.
+           @param normalize_y: Normalize y ?
+           @param cholesky: Use Cholesky decomposition or the Moore-Penrose pseudo-inverse
+        """
         self.kernel = kernel
         self.alpha = alpha
         self.normalize_y = normalize_y
+        self.cholesky = cholesky
 
     def fit(self, X, y):
         n_sample, n_features = X.shape
@@ -28,7 +37,11 @@ class GaussianProcessRegressor(AlgorithmBase):
         # Prior
         w_cov = self.kernel(X, X) + noise
         self.K = w_cov
-        self.w_cov_i = np.linalg.pinv(w_cov)
+        if self.cholesky:
+            self.L_ = cholesky(w_cov, lower=True)
+            self.alpha_ = cho_solve((self.L_, True), y)
+        else:
+            self.w_cov_i = np.linalg.pinv(w_cov)
 
     def predict(self, X, returnCov=False):
         n_sample, _ = X.shape
@@ -37,14 +50,22 @@ class GaussianProcessRegressor(AlgorithmBase):
         Kss = self.kernel(X, X) + noise
 
         # Posterior
-        mu_s = Ks.T.dot(self.w_cov_i).dot(self.y_dataset)
+        if self.cholesky:
+            mu_s = Ks.T.dot(self.alpha_)
+        else:
+            mu_s = Ks.T.dot(self.w_cov_i).dot(self.y_dataset)
+
         if self.normalize_y:  # Undo Normalisation
             mu_s = mu_s * self.y_scale + self.y_offset
 
         if not returnCov:
             return mu_s
         else:
-            cov_s = Kss - Ks.T.dot(self.w_cov_i).dot(Ks)
+            if self.cholesky:
+                v = cho_solve((self.L_, True), Ks)
+                cov_s = Kss - Ks.T.dot(v)
+            else:
+                cov_s = Kss - Ks.T.dot(self.w_cov_i).dot(Ks)
             if self.normalize_y:  # Undo Normalisation
                 cov_s = cov_s * self.y_scale + self.y_offset
             return mu_s, cov_s
